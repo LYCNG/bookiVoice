@@ -6,7 +6,7 @@ const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api/upload(.*)',
-  '/new', // 允許存取新增頁面進行測試，或者您可以依需求改為保護
+  '/books/new', // 允許存取新增頁面進行測試，或者您可以依需求改為保護
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

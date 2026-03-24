@@ -129,7 +129,7 @@ const UploadForm = () => {
       if (existsCheck?.exists && existsCheck.book) {
         toast.info("Book already exists");
         formRef.current?.reset();
-        router.push(`/book/${existsCheck.book.slug}`);
+        router.push(`/books/${existsCheck.book.slug}`);
         return;
       }
 
@@ -192,7 +192,7 @@ const UploadForm = () => {
       if (!book.success) {
         toast.info("Failed to create book");
         formRef.current?.reset();
-        router.push(`/books/${existsCheck.book.slug}`);
+        router.push(`/books/${book.data.slug}`);
         return;
       }
 

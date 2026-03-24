@@ -25,6 +25,36 @@ export const getAllBooks = async()=>{
         }
     }
 }
+
+/**
+ * 根據 Slug 獲取書籍詳情
+ * @param slug 書籍唯一識別名稱
+ * @returns 包含書籍資料的物件
+ */
+export const getBookBySlug = async (slug: string) => {
+    try {
+        await connectToDatabase();
+        const book = await Book.findOne({ slug }).lean();
+        
+        if (!book) {
+            return {
+                success: false,
+                error: "Book not found"
+            }
+        }
+
+        return {
+            success: true,
+            data: serializeData(book)
+        }
+    } catch (error) {
+        console.error("獲取書籍詳情時出錯:", error);
+        return {
+            success: false,
+            error: error
+        }
+    }
+}
 ;
 
 /**

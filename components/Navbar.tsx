@@ -17,7 +17,7 @@ const navItems = [
   { label: "Library", href: "/" },
   {
     label: "Add New",
-    href: "/new",
+    href: "/books/new",
   },
 ];
 
