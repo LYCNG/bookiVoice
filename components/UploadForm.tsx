@@ -201,6 +201,15 @@ const UploadForm = () => {
         userId,
         parsedPdf.content,
       );
+
+      if (!segments.success) {
+        toast.error("Failed to save book segments");
+        throw new Error("Failed to save book segments");
+      }
+
+      toast.success("Book uploaded successfully");
+      formRef.current?.reset();
+      router.push(`/`);
     } catch (error) {
       console.error("Upload error:", error);
       toast.error("Failed to process PDF file");

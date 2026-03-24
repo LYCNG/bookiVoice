@@ -6,6 +6,27 @@ import { generateSlug, serializeData } from "../utils";
 import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/book-segment.model";
 
+
+
+export const getAllBooks = async()=>{
+    try {
+        await connectToDatabase();
+   
+        const books = await Book.find().sort({createdAt: -1}).lean();
+        return {
+            success: true,
+            data: serializeData(books)
+        }
+    } catch (error) {
+        console.error("Error connecting to database:", error);
+        return {
+            success: false,
+            error: error
+        }
+    }
+}
+;
+
 /**
  * 檢查書籍是否已存在
  * @param title 書籍標題

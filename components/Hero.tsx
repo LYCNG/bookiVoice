@@ -81,6 +81,7 @@ const Hero = () => {
               fill
               className="object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
               priority
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
         </div>
