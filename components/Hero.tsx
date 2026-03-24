@@ -1,5 +1,6 @@
 "use client";
 import React, { useRef } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import { useGSAP } from "@gsap/react";
@@ -62,14 +63,12 @@ const Hero = () => {
             and discuss your favorite reads.
           </p>
           <div className="flex flex-wrap gap-4 pt-4">
-            <button className="flex items-center gap-3 bg-white text-[#2D241E] font-bold px-8 py-4 rounded-2xl transition-all transform hover:scale-105 shadow-lg active:scale-95 group border border-[#2D241E]/10 cursor-pointer">
-              <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
-              <span className="text-lg">Add new book</span>
-            </button>
-            <button className="flex items-center gap-3 bg-transparent hover:bg-white/20 text-[#2D241E] font-bold px-8 py-4 rounded-2xl transition-all transform hover:scale-105 border-2 border-[#2D241E]/20 active:scale-95 group cursor-pointer">
-              <Plus className="w-6 h-6 group-hover:opacity-70 transition-opacity" />
-              <span className="text-lg opacity-80">Add new book</span>
-            </button>
+            <Link href="/new">
+              <button className="flex items-center gap-3 bg-white text-[#2D241E] font-bold px-8 py-4 rounded-2xl transition-all transform hover:scale-105 shadow-lg active:scale-95 group border border-[#2D241E]/10 cursor-pointer">
+                <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+                <span className="text-lg">Add new book</span>
+              </button>
+            </Link>
           </div>
         </div>
 

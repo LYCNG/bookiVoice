@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // @ts-ignore
+  allowedDevOrigins: ["192.168.22.152"],
 };
 
 export default nextConfig;

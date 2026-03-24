@@ -27,12 +27,13 @@ const monaSans = Mona_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Bookified",
+  title: "BookiVoice",
   description:
     "Transform your books into interactive AI conversations. Upload PDFs, and chat with your books using voice.",
 };
 
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -48,7 +49,9 @@ export default function RootLayout({
         <ClerkProvider>
           <div className="layout-container relative flex flex-col min-h-screen justify-center items-center">
             <Navbar />
+
             <main className="flex-1 pt-28">{children}</main>
+            <Toaster />
           </div>
         </ClerkProvider>
       </body>

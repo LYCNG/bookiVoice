@@ -17,7 +17,7 @@ const navItems = [
   { label: "Library", href: "/" },
   {
     label: "Add New",
-    href: "/books/new",
+    href: "/new",
   },
 ];
 
@@ -30,12 +30,12 @@ const Navbar = () => {
         <Link href="/" className="flex gap-2 items-center">
           <Image
             src="/assets/logo.png"
-            alt="Bookfified"
+            alt="BookiVoice"
             width={32}
             height={32}
             className="rounded-lg shadow-sm"
           />
-          <span className="text-xl font-bold text-foreground">Bookfified</span>
+          <span className="text-xl font-bold text-foreground">BookiVoice</span>
         </Link>
 
         <div className="flex items-center gap-8">
