@@ -1,6 +1,7 @@
-import React from "react";
+export const dynamic = "force-dynamic";
+
 import Hero from "@/components/Hero";
-import { sampleBooks } from "@/lib/constant";
+
 import BookCard from "@/components/BookCard";
 import Search from "@/components/Search";
 import { getAllBooks } from "@/lib/actions/book.actions";
