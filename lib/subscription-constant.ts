@@ -4,13 +4,17 @@ export const PLANS = {
     PRO: 'pro',
 } as const;
 
-// Helper to normalize plan names from Clerk (handling typos like 'Stander')
+// Allowed plan aliases from Clerk/Billing to prevent misclassification
+const PLAN_ALIASES: Record<string, PlanType> = {
+    'pro': PLANS.PRO,
+    'standard': PLANS.STANDARD,
+    'stander': PLANS.STANDARD, // Handling specific typo from Clerk config
+};
+
 export const normalizePlanName = (plan: string | undefined): PlanType => {
     if (!plan) return PLANS.FREE;
-    const p = plan.toLowerCase();
-    if (p === 'pro' || p.includes('pro')) return PLANS.PRO;
-    if (p === 'standard' || p === 'stander' || p.includes('stand')) return PLANS.STANDARD;
-    return PLANS.FREE;
+    const p = plan.toLowerCase().trim();
+    return PLAN_ALIASES[p] || PLANS.FREE;
 };
 
 export type PlanType = typeof PLANS[keyof typeof PLANS];
@@ -45,6 +49,6 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
 
 export const getCurrentBillingPeriodStart = (): Date => {
     const now = new Date();
-    // Track billing cycle by calendar month (1st of each month at 00:00:00)
-    return new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    // Track billing cycle by calendar month (1st of each month at 00:00:00 UTC)
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
 };

@@ -25,7 +25,7 @@ export const useSubscription = () => {
     } else if (has?.({ plan: 'standard' }) || has?.({ plan: 'stander' })) {
         plan = PLANS.STANDARD;
     } 
-    // 2. Second Check: Fallback to user public metadata (Direct string match)
+    // 2. Second Check: Fallback to user public metadata (Strict normalization)
     else {
         const metadataPlan = (user?.publicMetadata?.plan || user?.publicMetadata?.billingPlan || user?.publicMetadata?.subscription)?.toString();
         plan = normalizePlanName(metadataPlan);
