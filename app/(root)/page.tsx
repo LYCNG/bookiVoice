@@ -6,15 +6,17 @@ import BookCard from "@/components/BookCard";
 import Search from "@/components/Search";
 import { getAllBooks } from "@/lib/actions/book.actions";
 
-const page = async () => {
-  const bookResult = await getAllBooks();
-
+const page = async (props: { searchParams?: Promise<{ query?: string }> }) => {
+  const searchParams = await props.searchParams;
+  const query = searchParams?.query || "";
+  
+  const bookResult = await getAllBooks(query);
   const books = bookResult.success ? (bookResult.data ?? []) : [];
 
   return (
-    <div className="container">
+    <div className="wrapper mt-20 mb-20">
       <Hero />
-      <div className="wrapper">
+      <div className="mt-20">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 mb-10">
           <h2 className="text-3xl font-serif font-bold text-[#212a3b]">
             Recent Books

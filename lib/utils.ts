@@ -1,23 +1,34 @@
 import { TextSegment } from "@/types";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { voiceOptions } from "./constant";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Serialize Mongoose documents to plain JSON objects (strips ObjectId, Date, etc.)
+
+// Escape regex special characters to prevent ReDoS attacks
+export const escapeRegex = (str: string): string => {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
+// 將 Mongoose 文件序列化為純 JSON 物件（移除 ObjectId, Date 等特殊型別，方便在 Server Component 間傳遞）
 export const serializeData = <T>(data: T): T => JSON.parse(JSON.stringify(data));
 
 // Auto generate slug
 export function generateSlug(text: string): string {
-  return text
+  const slug = text
       .replace(/\.[^/.]+$/, '') // Remove file extension (.pdf, .txt, etc.)
       .toLowerCase() // Convert to lowercase
       .trim() // Remove whitespace from both ends
-      .replace(/[^\w\s-]/g, '') // Remove special characters (keep letters, numbers, spaces, hyphens)
+      // Allow letters, numbers, spaces, hyphens and common CJK chars
+      .replace(/[^\w\s\u4e00-\u9fa5\u3040-\u30ff-]/g, '') 
       .replace(/[\s_]+/g, '-') // Replace spaces and underscores with hyphens
       .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+      
+  // if slug is empty, fallback to a timestamp or random string so we don't have empty slugs
+  return slug || `book-${Date.now()}`;
 }
 
 /**
@@ -133,3 +144,20 @@ export async function parsePDFFile(file: File) {
     throw new Error(`Failed to parse PDF file: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
+// Default voice
+export const DEFAULT_VOICE = 'rachel';
+
+export const getVoice = (persona?: string) => {
+  if (!persona) return voiceOptions[DEFAULT_VOICE];
+
+  // Find by voice ID
+  const voiceEntry = Object.values(voiceOptions).find((v) => v.id === persona);
+  if (voiceEntry) return voiceEntry;
+
+  // Find by key
+  const voiceByKey = voiceOptions[persona as keyof typeof voiceOptions];
+  if (voiceByKey) return voiceByKey;
+
+  // Default fallback
+  return voiceOptions[DEFAULT_VOICE];
+};

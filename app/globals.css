@@ -132,7 +132,7 @@
     @apply w-full max-w-[1440px] px-4 md:px-8 lg:px-12 mx-auto;
   }
   .layout-container {
-    @apply w-[85vw] mx-auto transition-all duration-300;
+    @apply w-full max-w-[1440px] mx-auto transition-all duration-300;
   }
 }
 
