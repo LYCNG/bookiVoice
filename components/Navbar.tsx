@@ -12,20 +12,21 @@ import {
   UserButton,
   useUser,
 } from "@clerk/nextjs";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const navItems = [
   { label: "Library", href: "/" },
-  {
-    label: "Add New",
-    href: "/books/new",
-  },
+  { label: "Add New", href: "/books/new" },
+  { label: "Pricing", href: "/subscriptions" },
 ];
 
 const Navbar = () => {
   const pathname = usePathname();
   const { user } = useUser();
+  const { plan } = useSubscription();
+
   return (
-    <header className="fixed top-0 left-1/2 -translate-x-1/2 w-[85vw] z-50 bg-background/80 backdrop-blur-md border-b border-border transition-all">
+    <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[1440px] px-4 md:px-8 lg:px-12 z-50 bg-background/80 backdrop-blur-md border-b border-border transition-all">
       <div className="px-6 md:px-10 navbar-height py-4 flex justify-between items-center">
         <Link href="/" className="flex gap-2 items-center">
           <Image
@@ -87,9 +88,24 @@ const Navbar = () => {
                 {user?.firstName && (
                   <Link
                     href="/subscriptions"
-                    className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+                    className="flex items-center gap-2 group transition-all"
                   >
-                    {user.firstName}
+                    <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                      {user.firstName}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border",
+                        plan === "pro" &&
+                          "bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]",
+                        plan === "standard" &&
+                          "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]",
+                        plan === "free" &&
+                          "bg-slate-800 text-slate-400 border-slate-700",
+                      )}
+                    >
+                      {plan}
+                    </span>
                   </Link>
                 )}
               </div>
