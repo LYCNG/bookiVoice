@@ -190,12 +190,17 @@ const UploadForm = () => {
         fileSize: pdfFile.size,
       });
       if (!book.success) {
-        toast.info("Failed to create book");
+        toast.error((book.error as string) || "Failed to create book");
+        formRef.current?.reset();
+        router.push("/subscriptions");
+        return;
+      }
+      if (book.alreadyExists) {
+        toast.info("Book with same title already exists");
         formRef.current?.reset();
         router.push(`/books/${book.data.slug}`);
         return;
       }
-
       const segments = await saveBookSegments(
         book.data._id,
         userId,
@@ -210,9 +215,9 @@ const UploadForm = () => {
       toast.success("Book uploaded successfully");
       formRef.current?.reset();
       router.push(`/`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error("Failed to process PDF file");
+      toast.error(error.message || "Failed to process PDF file");
     } finally {
       setIsSubmitting(false);
     }

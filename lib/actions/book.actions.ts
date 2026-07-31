@@ -1,18 +1,35 @@
 'use server'
 
+/**
+ * Book resource server actions
+ * Handles book creation, queries, and content segment storage
+ */
 import { connectToDatabase } from "@/database/mongoose";
 import { CreateBook, TextSegment } from "@/types";
-import { generateSlug, serializeData } from "../utils";
+import { escapeRegex, generateSlug, serializeData } from "../utils";
 import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/book-segment.model";
+import mongoose from "mongoose";
+import { revalidatePath } from "next/cache";
 
 
 
-export const getAllBooks = async()=>{
+export const getAllBooks = async (query?: string) => {
     try {
         await connectToDatabase();
+        
+        let filter = {};
+        if (query) {
+            const searchRegex = new RegExp(escapeRegex(query), 'i');
+            filter = {
+                $or: [
+                    { title: { $regex: searchRegex } },
+                    { author: { $regex: searchRegex } }
+                ]
+            };
+        }
    
-        const books = await Book.find().sort({createdAt: -1}).lean();
+        const books = await Book.find(filter).sort({ createdAt: -1 }).lean();
         return {
             success: true,
             data: serializeData(books)
@@ -27,9 +44,9 @@ export const getAllBooks = async()=>{
 }
 
 /**
- * 根據 Slug 獲取書籍詳情
- * @param slug 書籍唯一識別名稱
- * @returns 包含書籍資料的物件
+ * Get book details by slug
+ * @param slug Unique book identifier
+ * @returns Object containing book data
  */
 export const getBookBySlug = async (slug: string) => {
     try {
@@ -48,7 +65,7 @@ export const getBookBySlug = async (slug: string) => {
             data: serializeData(book)
         }
     } catch (error) {
-        console.error("獲取書籍詳情時出錯:", error);
+        console.error("Error getting book details:", error);
         return {
             success: false,
             error: error
@@ -58,16 +75,16 @@ export const getBookBySlug = async (slug: string) => {
 ;
 
 /**
- * 檢查書籍是否已存在
- * @param title 書籍標題
- * @returns 包含書籍是否存在與其資料的物件
+ * Check if a book already exists
+ * @param title Book title
+ * @returns Object indicating if the book exists and its data
  */
 export const checkBookExists = async (title: string) => {
     try {
         await connectToDatabase();
-        // 生成唯一識別名稱 (Slug)
+        // Generate unique slug
         const slug = generateSlug(title);
-        // 使用 lean() 提升查詢效能（僅返回純 JS 物件）
+        // Use lean() for better performance (returns plain JS object)
         const existingBook = await Book.findOne({ slug }).lean();
         
         if (existingBook) {
@@ -88,16 +105,16 @@ export const checkBookExists = async (title: string) => {
 };
 
 /**
- * 建立新書籍
- * @param data 書籍建立所需的資料 (CreateBook 介面)
- * @returns 建立結果與書籍資料
+ * Create a new book
+ * @param data Data required for book creation (CreateBook interface)
+ * @returns Creation result and book data
  */
 export const createBook = async (data: CreateBook) => {
     try {
         await connectToDatabase();
         const slug = generateSlug(data.title);
         
-        // 再次確認是否已存在，避免重複建立
+        // Check again if it exists to prevent duplicates
         const existingBook = await Book.findOne({ slug });
         if (existingBook) {
             return {
@@ -107,10 +124,28 @@ export const createBook = async (data: CreateBook) => {
             }
         }
         
-        // TODO: 在建立書籍前檢查訂閱限制
+        // Check subscription limits before creating
+        const { getUserPlan } = await import("@/lib/subscription.server");
+        const { PLAN_LIMITS } = await import("@/lib/subscription-constant");
+        const {auth} = await import('@clerk/nextjs/server');
+        const {userId}=await auth();
+
+        const plan = await getUserPlan();
+        const limits = PLAN_LIMITS[plan];
+        
+        const currentBookCount = await Book.countDocuments({ clerkId: userId });
+        
+        if (currentBookCount >= limits.maxBooks) {
+            revalidatePath('/');
+            return {
+                success: false,
+                error: `You have reached the ${plan.toUpperCase()} plan limit for books (${limits.maxBooks} books). Please upgrade your plan to continue.`,
+                isBillingError: true
+            }
+        }
         
         // 建立書籍紀錄，初步設定總段數為 1
-        const book = await Book.create({ ...data, slug, totalSegments: 1 });
+        const book = await Book.create({ ...data,clerkId:userId, slug, totalSegments: 1 });
         return {
             success: true,
             data: serializeData(book)
@@ -124,18 +159,67 @@ export const createBook = async (data: CreateBook) => {
     }
 };
 
-/**
- * 儲存書籍分段內容
- * @param bookId 書籍 ID
- * @param clerkId 使用者 ID
- * @param segments 段落資料陣列
- * @returns 儲存結果
- */
+// Searches book segments using MongoDB text search with regex fallback
+export const searchBookSegments = async (bookId: string, query: string, limit: number = 5) => {
+    try {
+        await connectToDatabase();
+
+        console.log(`Searching for: "${query}" in book ${bookId}`);
+
+        const bookObjectId = new mongoose.Types.ObjectId(bookId);
+
+        // Try MongoDB text search first (requires text index)
+        let segments: Record<string, unknown>[] = [];
+        try {
+            segments = await BookSegment.find({
+                bookId: bookObjectId,
+                $text: { $search: query },
+            })
+                .select('_id bookId content segmentIndex pageNumber wordCount')
+                .sort({ score: { $meta: 'textScore' } })
+                .limit(limit)
+                .lean();
+        } catch {
+            // Text index may not exist — fall through to regex fallback
+            segments = [];
+        }
+
+        // Fallback: regex search matching ANY keyword
+        if (segments.length === 0) {
+            const keywords = query.split(/\s+/).filter((k) => k.length > 2);
+            const pattern = keywords.map(escapeRegex).join('|');
+
+            segments = await BookSegment.find({
+                bookId: bookObjectId,
+                content: { $regex: pattern, $options: 'i' },
+            })
+                .select('_id bookId content segmentIndex pageNumber wordCount')
+                .sort({ segmentIndex: 1 })
+                .limit(limit)
+                .lean();
+        }
+
+        console.log(`Search complete. Found ${segments.length} results`);
+
+        return {
+            success: true,
+            data: serializeData(segments),
+        };
+    } catch (error) {
+        console.error('Error searching segments:', error);
+        return {
+            success: false,
+            error: (error as Error).message,
+            data: [],
+        };
+    }
+};
+
 export const saveBookSegments = async (bookId: string, clerkId: string, segments: TextSegment[]) => {
     try {
         await connectToDatabase();
         
-        // 映射段落資料以符合資料庫 Model (將介面的 text 轉為 Model 的 content)
+        // Map segments to database model (text -> content)
         const segmentsToInsert = segments.map(({ text, segmentIndex, pageNumber, wordCount }) => ({
             bookId,
             clerkId,
@@ -145,13 +229,13 @@ export const saveBookSegments = async (bookId: string, clerkId: string, segments
             wordCount
         }));
 
-        // 批量直接插入段落以提升效能
+        // Batch insert segments for performance
         await BookSegment.insertMany(segmentsToInsert);
         
-        // 更新書籍總段數資訊
+        // Update book total segments info
         await Book.findByIdAndUpdate(bookId, { totalSegments: segments.length });
         
-        console.log('成功儲存書籍分段與書籍資訊');
+        console.log('Successfully saved segments and book info');
         return {
             success: true,
             data: { segmentsCreated: segments.length }
@@ -162,7 +246,7 @@ export const saveBookSegments = async (bookId: string, clerkId: string, segments
         // 錯誤復原機制：若分段儲存失敗，則刪除已建立的相關資料以維持資料一致性
         await BookSegment.deleteMany({ bookId });
         await Book.findByIdAndDelete(bookId);
-        console.log('由於分段儲存失敗，已回滾並刪除書籍及其分段資料');
+        console.log('Rolling back: Deleted book and segments due to segment save failure');
         
         return {
             success: false,

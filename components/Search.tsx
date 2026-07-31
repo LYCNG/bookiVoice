@@ -30,14 +30,14 @@ const Search = () => {
   }, [query, pathname, router]);
 
   return (
-    <div className="library-search-wrapper">
-      <div className="pl-4">
-        <SearchIcon size={20} className="text-[var(--text-muted)]" />
+    <div className="relative w-full sm:max-w-xs group">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-focus-within:text-primary text-slate-400">
+        <SearchIcon size={18} />
       </div>
       <Input
         type="text"
-        placeholder="Search books by title or author"
-        className="library-search-input border-none shadow-none focus-visible:ring-0"
+        placeholder="Search books..."
+        className="w-full pl-11 pr-4 py-6 bg-slate-100/50 border-slate-200/60 rounded-2xl shadow-sm focus-visible:ring-primary/20 focus-visible:border-primary transition-all placeholder:text-slate-400 text-slate-700"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />

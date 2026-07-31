@@ -4,8 +4,11 @@ import Image from "next/image";
 import { BookCardProps } from "@/types";
 
 const BookCard = ({ title, author, coverURL, slug, priority }: BookCardProps) => {
+  // 確保 slug 存在，否則導向首頁或報錯
+  const linkHref = slug ? `/books/${slug}` : "#";
+  
   return (
-    <Link href={`/books/${slug}`}>
+    <Link href={linkHref}>
       <article className="flex flex-col gap-4 group cursor-pointer w-full">
         <figure className="bg-white rounded-[32px] p-6 shadow-sm group-hover:shadow-xl transition-all duration-500 transform group-hover:-translate-y-2 border border-black/5">
           <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl shadow-md">

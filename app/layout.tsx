@@ -44,14 +44,14 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${ibmPlexSerif.variable} ${monaSans.variable}  relative font-sans antialiased`}
+      className={`${ibmPlexSerif.variable} ${monaSans.variable} relative font-sans antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background selection:bg-primary/10">
         <ClerkProvider>
-          <div className="layout-container relative flex flex-col min-h-screen justify-center items-center">
+          <div className="layout-container relative flex flex-col min-h-screen">
             <Navbar />
 
-            <main className="flex-1 mt-28 mb-28">{children}</main>
+            <main className="flex-1 w-full">{children}</main>
             <Toaster />
           </div>
         </ClerkProvider>
